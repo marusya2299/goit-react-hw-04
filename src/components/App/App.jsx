@@ -1,41 +1,68 @@
-import Description from "../Description/Description";
-import Feedback from "../Feedback/Feedback";
-import Options from "../Options/Options";
-import Notification from "../Notification/Notification";
+import { useState } from 'react';
 
-import { useState, useEffect } from 'react';
+import SearchBar from '../SearchBar/SearchBar';
+import ImageGallery from '../ImageGallery/ImageGallery.jsx';
+import Loader from '../Loader/Loader.jsx';
+import ErrorMessage from '../ErrorMessage/ErrorMessage.jsx';
+import LoadMoreBtn from '../LoadMoreBtn/LoadMoreBtn.jsx';
+import ImageModal from '../ImageModal/ImageModal.jsx';
+
+import { fetchArticlesWithTopic } from "../../articles-api.js";
 
 export default function App(){
-  const [values, setValues] = useState(()=>{
-    const savedValues = window.localStorage.getItem("feedback-values");
-    return savedValues ? JSON.parse(savedValues) : {good: 0, neutral: 0, bad: 0};
-  });
 
-  useEffect(() => {
-    window.localStorage.setItem("feedback-values", JSON.stringify(values));
-  }, [values]);
+  const quantityImages = 4;
+  const [articles, setArticles] = useState([]);
+  const [visibleArticles, setVisibleArticles] = useState(quantityImages);
+  const [error, setError] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [modalIsOpen, setIsOpen] = useState(false);
+  const [selectedImage, setSelectedImage] = useState(null);
 
-  const updateFeedback = (feedbackType)=>{
-    setValues(value => ({...value, [feedbackType]: value[feedbackType] + 1}));
+  const handleSearch = async (search) => {
+    try{
+      setArticles([]);
+      setVisibleArticles(quantityImages);
+      setError(false);
+      setLoading(true);
+      
+      const data = await fetchArticlesWithTopic(search);
+      setArticles(data);
+    }
+    catch{
+      setError(true);
+    }
+    finally{
+      setLoading(false);
+    }
+  };
+
+  const loadMore = () => {
+    setVisibleArticles(prev => prev + quantityImages);
   }
 
-  const resetFeedback = ()=>{
-    setValues({good: 0, neutral: 0, bad: 0});
+  function openModal(image) {
+    setSelectedImage(image);
+    setIsOpen(true);
   }
 
-  const totalFeedback  = values.good + values.neutral + values.bad;
-  const positiveFeedback = totalFeedback  > 0 ? Math.round((values.good / totalFeedback ) * 100) : 0;
-
-
-  return (
+  function closeModal() {
+    setIsOpen(false);
+  }
+  
+  return(
     <>
-      <Description />
-      <Options 
-        totalFeedback ={totalFeedback } 
-        updateFeedback={updateFeedback} 
-        resetFeedback={resetFeedback} 
-      />
-      {totalFeedback  === 0 ? <Notification /> : <Feedback {...values} positiveFeedback={positiveFeedback} totalFeedback={totalFeedback} />}
+      <SearchBar onSubmit={handleSearch} />
+      {error && <ErrorMessage />}
+      
+      {articles.length > 0 && 
+      <> 
+        <ImageGallery images={articles.slice(0, visibleArticles)} openModal={openModal} /> 
+        {modalIsOpen && <ImageModal isOpen={modalIsOpen} closeModal={closeModal} selectedImage={selectedImage} />}
+      </>
+     }
+      {loading && <Loader />}
+      {articles.length > visibleArticles && !loading && (<LoadMoreBtn loadMore={loadMore} />)}
     </>
   )
 
