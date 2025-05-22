@@ -1,7 +1,13 @@
 import ImageCard from "../ImageCard/ImageCard";
 import css from "../ImageGallery/ImageGallery.module.css";
+import { Image } from "../../articles-api";
 
-export default function ImageGallery({images, openModal}){
+type ImageGalleryProps = {
+  images: Image[];
+  openModal: (image: Image) => void;
+};
+
+export default function ImageGallery({images, openModal}: ImageGalleryProps){
 
     return(
         <ul className={css.list}>

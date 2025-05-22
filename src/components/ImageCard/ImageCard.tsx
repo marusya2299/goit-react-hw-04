@@ -1,11 +1,17 @@
 import css from "../ImageCard/ImageCard.module.css";
 import { GoPerson, GoMention, GoHeart } from "react-icons/go";
+import {Image} from '../../articles-api';
 
-export default function ImageCard({image, openModal}){
+type ImageCardProps = {
+  image: Image;
+  openModal: (image: Image) => void;
+};
+
+export default function ImageCard({image, openModal}: ImageCardProps){
 
     return(
         <li onClick={() => openModal(image)} className={css.item}>
-            <img className={css.image} src={image.urls.regular} alt={image.description} />
+            <img className={css.image} src={image.urls.regular} alt={image.description ?? ''} />
             <div className={css.description}>
                 <div className={css.iconText}>
                     <GoPerson />
